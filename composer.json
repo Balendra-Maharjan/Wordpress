@@ -1,0 +1,10 @@
+{
+  "require": {
+    "pantheon-systems/terminus": "^3"
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "ln -sr wp-content/uploads/sage-cache wp-content/cache"
+    ]
+  }
+}

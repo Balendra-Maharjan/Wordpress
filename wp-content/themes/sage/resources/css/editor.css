@@ -1,0 +1,30 @@
+/* @import "tailwindcss"; */
+
+html :where(.wp-block) {
+  max-width: 100% !important;
+}
+.edit-post-visual-editor__content-area > .is-desktop-preview {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+.editor-visual-editor {
+  background-color: white;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+html :where(.editor-styles-wrapper) {
+  font-family: inherit !important;
+}
+
+body.js.block-editor-page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif !important;
+  font-size: 13px;
+  line-height: 1.4em;
+}
+
+.editor-visual-editor {
+  font-family: var(--os-body-font-family) !important;
+}

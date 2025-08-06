@@ -1,0 +1,20 @@
+{
+    "name": "outside/about",
+    "title": "About",
+    "description": "About Module",
+    "category": "formatting",
+    "icon": "layout",
+    "keywords": ["about"],
+    "style": [],
+    "script": ["about"],
+    "acf": {
+      "mode": "auto",
+      "renderTemplate": "about.blade.php"
+    },
+    "supports": {
+      "anchor": true,
+      "align": true,
+      "mode": false,
+      "jsx": true
+    }
+}

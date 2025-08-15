@@ -131,13 +131,7 @@ add_action('after_setup_theme', function () {
     add_theme_support('customize-selective-refresh-widgets');
 }, 20);
 
-add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_script('sage/filter.js', \Roots\asset('resources/js/filter.js')->uri(), ['jquery'], null, true);
-    wp_localize_script('sage/filter.js', 'filter_params', [
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce'    => wp_create_nonce('filter_nonce'),
-    ]);
-});
+
 
 // Limit file upload size to 5 MB for PDFs and 1 MB for others
 add_filter('wp_handle_upload_prefilter', function($file) {
@@ -158,4 +152,10 @@ add_filter('wp_handle_upload_prefilter', function($file) {
     }
 
     return $file;
+});
+
+add_action('wp_head', function () {
+    echo '<script>
+    var filter_params = {"ajax_url":"' . admin_url('admin-ajax.php') . '","site_url":"' . home_url() . '"};
+    </script>';
 });

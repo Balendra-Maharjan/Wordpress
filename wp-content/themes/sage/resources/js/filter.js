@@ -30,16 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formData = new FormData(filterForm);
     
-    // currentSearch = formData.get('search');
-    // currentCategory = formData.get('category');
+    currentSearch = formData.get('search');
+    currentCategory = formData.get('category');
 
     const ajaxData = new FormData();
     document.querySelector('input[name="paged"]').value = paged;
-    // ajaxData.append('action', 'filter_and_paginate');
-    // ajaxData.append('nonce', filter_params.nonce);
-    // ajaxData.append('search', currentSearch);
-    // ajaxData.append('category_slug', currentCategory); // Changed to category_slug
-    // ajaxData.append('paged', currentPage);
+    ajaxData.append('action', 'filter_and_paginate');
+    ajaxData.append('nonce', filter_params.nonce);
+    ajaxData.append('search', currentSearch);
+    ajaxData.append('category_slug', currentCategory); // Changed to category_slug
+    ajaxData.append('paged', currentPage);
 
     try {
       const response = await fetch(filter_params.ajax_url, {
@@ -82,18 +82,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initial fetch on page load based on URL parameters
-  // const params = new URLSearchParams(window.location.search);
-  // currentSearch = params.get('search') || '';
-  // currentCategory = params.get('category') || '';
-  // currentPage = parseInt(params.get('paged')) || 1;
+  const params = new URLSearchParams(window.location.search);
+  currentSearch = params.get('search') || '';
+  currentCategory = params.get('category') || '';
+  currentPage = parseInt(params.get('paged')) || 1;
 
-  // // Set initial form values from URL
-  // if (currentSearch) {
-  //   filterForm.querySelector('#search').value = currentSearch;
-  // }
-  // if (currentCategory) {
-  //   filterForm.querySelector('#category').value = currentCategory;
-  // }
+  // Set initial form values from URL
+  if (currentSearch) {
+    filterForm.querySelector('#search').value = currentSearch;
+  }
+  if (currentCategory) {
+    filterForm.querySelector('#category').value = currentCategory;
+  }
 
   fetchPosts(1); // Fetch posts on initial load
+  
+
 });
+
+

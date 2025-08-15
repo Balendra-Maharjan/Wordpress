@@ -327,3 +327,88 @@ function sage_filter_and_paginate_handler() {
 
     wp_die();
 }
+
+function register_custom_post_type() {
+
+    $labels = [
+        'name'               => 'blogs',
+        'singular_name'      => 'blog',
+        'menu_name'          => 'blogs',
+        'name_admin_bar'     => 'blog',
+        'add_new'            => 'Add New',
+        'add_new_item'       => 'Add New blog',
+        'new_item'           => 'New blog',
+        'edit_item'          => 'Edit blog',
+        'view_item'          => 'View blog',
+        'all_items'          => 'All blogs',
+        'search_items'       => 'Search blogs',
+        'parent_item_colon'  => 'Parent blogs:',
+        'not_found'          => 'No blogs found.',
+        'not_found_in_trash' => 'No blogs found in Trash.'
+    ];
+
+    $args = [
+        'labels'             => $labels,
+        'public'             => true,
+        'has_archive'        => true,
+        'rewrite'            => ['slug' => 'blogs'],
+        'show_in_rest'       => true, // for Gutenberg and REST API
+        'supports'           => ['title', 'editor', 'thumbnail', 'excerpt'],
+        'menu_icon'          => 'dashicons-portfolio', // WordPress icon class
+    ];
+
+    register_post_type('blog', $args);
+}
+add_action('init', 'register_custom_post_type');
+
+add_action('wp_ajax_load_more_projects', 'load_more_projects');
+add_action('wp_ajax_nopriv_load_more_projects', 'load_more_projects');
+
+function load_more_projects() {
+    $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+
+    $args = [
+        'post_type' => 'blog',
+        'posts_per_page' => 2,
+        'paged' => $paged,
+    ];
+
+    $query = new WP_Query($args);
+
+    ob_start();
+    if ($query->have_posts()) :
+        while ($query->have_posts()) : $query->the_post(); ?>
+            <article>
+                <h2><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
+                <div class="excerpt"><?php the_excerpt(); ?></div>
+            </article>
+        <?php endwhile;
+    endif;
+    wp_reset_postdata();
+
+    $html = ob_get_clean();
+    $has_more = $query->max_num_pages > $paged;
+
+    wp_send_json_success([
+        'html' => $html,
+        'has_more' => $has_more,
+    ]);
+}
+
+
+add_action('pre_get_posts', function ($query) {
+    if (!is_admin() && $query->is_home() && $query->is_main_query()) {
+        $query->set('post_type', 'blog');
+        $query->set('posts_per_page', 4);
+    }
+});
+
+add_action('wp_enqueue_scripts', function () {
+    wp_enqueue_script('sage/filter.js', \Roots\asset('resources/js/filter.js')->uri(), ['jquery'], null, true);
+    wp_localize_script('sage/filter.js', 'filter_params', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('filter_nonce'),
+    ]);
+});
+
+

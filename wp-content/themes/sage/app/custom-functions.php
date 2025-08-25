@@ -245,6 +245,41 @@ function sage_section_gap($sectionTopGap, $sectionBottomGap) {
     return $sectionGap;
 }
 
+function sage_custom_pagination($query, $paged) {
+    $total_pages = $query->max_num_pages;
+    $current_page = $paged;
+
+    if ($total_pages > 1) {
+        $pagination_html = '<nav class="pagination-container mt-8 flex justify-center">';
+        $pagination_html .= '<div class="pagination-links inline-flex -space-x-px rounded-md shadow-sm text-sm">';
+
+        // Previous page link
+        if ($current_page > 1) {
+            $pagination_html .= '<a href="?paged=' . ($current_page - 1) . '" class="pagination-link relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white font-medium text-gray-500 hover:bg-gray-50">Previous</a>';
+        }
+
+        // Page number links
+        for ($i = 1; $i <= $total_pages; $i++) {
+            if ($i == $current_page) {
+                $pagination_html .= '<span class="current relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-600 font-medium text-white">' . $i . '</span>';
+            } else {
+                $pagination_html .= '<a href="?paged=' . $i . '" class="pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white font-medium text-gray-700 hover:bg-gray-50">' . $i . '</a>';
+            }
+        }
+
+        // Next page link
+        if ($current_page < $total_pages) {
+            $pagination_html .= '<a href="?paged=' . ($current_page + 1) . '" class="pagination-link relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white font-medium text-gray-500 hover:bg-gray-50">Next</a>';
+        }
+
+        $pagination_html .= '</div>';
+        $pagination_html .= '</nav>';
+
+        return $pagination_html;
+    }
+    return '';
+}
+
 add_action('wp_ajax_filter_and_paginate', 'sage_filter_and_paginate_handler');
 add_action('wp_ajax_nopriv_filter_and_paginate', 'sage_filter_and_paginate_handler');
 
@@ -252,28 +287,32 @@ function sage_filter_and_paginate_handler() {
     check_ajax_referer('filter_nonce', 'nonce');
 
     $search_query = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
-    $category_slug = isset($_POST['category_slug']) ? sanitize_text_field($_POST['category_slug']) : '';
+    $category_slug = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : '';
     $paged = isset($_POST['paged']) ? (int)$_POST['paged'] : 1;
-
-    error_log('Received category_slug: ' . $category_slug); // Debugging line
-
+    $posts_per_page = get_field('no_of_post_per_page', 'option');
     $args = [
-        'post_type' => 'post',
-        'posts_per_page' => 6, // Set to 6 posts per page
+        'post_type' => 'blog',
+        'posts_per_page' => $posts_per_page,
         's' => $search_query,
-        'category_name' => $category_slug, // Changed to category_name
+        'category_name' => $category_slug,
         'paged' => $paged,
     ];
 
-    error_log('WP_Query args: ' . print_r($args, true)); // Debugging line
-
+    if(  $category_slug ){
+        $args['tax_query'][] = [
+            'taxonomy' => 'category',
+            'field' => 'slug',
+            'terms' =>  $category_slug,
+        ];
+    }
+    // dump($args);
+    // exit;
     $query = new WP_Query($args);
 
     $response = [
         'html' => '',
-        'pagination' => '', // New key for pagination HTML
+        'pagination' => '',
         'max_num_pages' => 0,
-        'query_args' => $args, // Add query arguments for debugging
     ];
 
     ob_start();
@@ -281,7 +320,6 @@ function sage_filter_and_paginate_handler() {
     if ($query->have_posts()) {
         while ($query->have_posts()) {
             $query->the_post();
-            // Render post HTML (similar to template-filter.blade.php's article structure)
             echo '<article>';
             echo '<h2><a href="' . esc_url(get_permalink()) . '">' . get_the_title() . '</a></h2>';
             echo '<div class="entry-summary">' . get_the_excerpt() . '</div>';
@@ -294,32 +332,8 @@ function sage_filter_and_paginate_handler() {
     $response['html'] = ob_get_clean();
     $response['max_num_pages'] = $query->max_num_pages;
 
-    // Generate pagination links
-    $pagination_args = [
-        'base' => str_replace(999999999, '%#%', esc_url(get_pagenum_link(999999999))),
-        'total' => $query->max_num_pages,
-        'current' => max(1, $paged),
-        'format' => '?paged=%#%',
-        'prev_text' => __('&laquo; Previous'),
-        'next_text' => __('Next &raquo;'),
-        'type' => 'array', // Return as array to handle in JS
-    ];
-
-    // Add search and category to pagination links
-    if (!empty($search_query)) {
-        $pagination_args['add_args']['search'] = urlencode($search_query);
-    }
-    if (!empty($category_id)) {
-        $pagination_args['add_args']['category'] = $category_id;
-    }
-
-    $pagination_links = paginate_links($pagination_args);
-
-    // Convert array of links to HTML string
-    if (is_array($pagination_links)) {
-        $response['pagination'] = '<div class="pagination-links">' . implode('', $pagination_links) . '</div>';
-    }
-
+    // Generate custom pagination
+    $response['pagination'] = sage_custom_pagination($query, $paged);
 
     wp_reset_postdata();
 
@@ -355,14 +369,14 @@ function register_custom_post_type() {
         'show_in_rest'       => true, // for Gutenberg and REST API
         'supports'           => ['title', 'editor', 'thumbnail', 'excerpt'],
         'menu_icon'          => 'dashicons-portfolio', // WordPress icon class
+        'taxonomies'         => ['category'],
+        'show_ui'            => true, 
+        'show_in_menu'       => true, 
     ];
 
     register_post_type('blog', $args);
 }
 add_action('init', 'register_custom_post_type');
-
-add_action('wp_ajax_load_more_projects', 'load_more_projects');
-add_action('wp_ajax_nopriv_load_more_projects', 'load_more_projects');
 
 function load_more_projects() {
     $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
@@ -394,6 +408,9 @@ function load_more_projects() {
         'has_more' => $has_more,
     ]);
 }
+add_action('wp_ajax_load_more_projects', 'load_more_projects');
+add_action('wp_ajax_nopriv_load_more_projects', 'load_more_projects');
+
 
 
 add_action('pre_get_posts', function ($query) {
@@ -411,4 +428,52 @@ add_action('wp_enqueue_scripts', function () {
     ]);
 });
 
+function add_html_to_cpt_permalink($post_link, $post) {
+    if ($post->post_type === 'blog') {
+        return home_url('/blog/' . $post->post_name . '.html');
+    }
+    return $post_link;
+}
+add_filter('post_type_link', 'add_html_to_cpt_permalink', 10, 2);
 
+function add_category_metabox_to_blog() {
+    add_meta_box(
+        'categorydiv',       // ID of the meta box
+        'Categories',        // Title
+        'post_categories_meta_box', // Callback function used by default posts
+        'blog',              // Post type
+        'side',              // Context
+        'default'            // Priority
+    );
+}
+add_action('add_meta_boxes', 'add_category_metabox_to_blog');
+
+// Add custom columns
+function blog_custom_columns($columns) {
+    $columns['categories'] = 'Categories';
+    return $columns;
+}
+add_filter('manage_blog_posts_columns', 'blog_custom_columns');
+
+// Populate custom columns
+function blog_custom_columns_content($column, $post_id) {
+    switch ($column) {
+        case 'categories':
+            $terms = get_the_terms($post_id, 'category'); // default categories
+            if (!empty($terms)) {
+                $out = [];
+                foreach ($terms as $term) {
+                    $out[] = $term->name;
+                }
+                echo implode(', ', $out);
+            }
+            break;
+
+        case 'thumbnail':
+            if (has_post_thumbnail($post_id)) {
+                echo get_the_post_thumbnail($post_id, [50, 50]);
+            }
+            break;
+    }
+}
+add_action('manage_blog_posts_custom_column', 'blog_custom_columns_content', 10, 2);

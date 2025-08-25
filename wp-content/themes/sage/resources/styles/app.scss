@@ -1,1 +1,58 @@
 // @import something
+
+.form-input, .form-select {
+  transition: all 0.3s ease;
+}
+
+.btn {
+  transition: background-color 0.3s ease;
+}
+
+#filter-results-container .post-item {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#filter-results-container .post-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+#filter-results-container .post-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+#filter-results-container .post-item-content {
+  padding: 1.5rem;
+}
+
+#filter-results-container .post-item-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+#filter-results-container .post-item-excerpt {
+  color: #6b7280;
+}
+
+#pagination-container .pagination-links a {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.3s ease;
+  margin: 0 0.25rem;
+}
+
+#pagination-container .pagination-links a:hover {
+  background-color: #e5e7eb;
+}
+
+#pagination-container .pagination-links .current {
+  background-color: #3b82f6;
+  color: #fff;
+}

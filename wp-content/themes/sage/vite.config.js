@@ -28,6 +28,7 @@ export default defineConfig({
         'resources/js/editor.js',
         'resources/js/single.js',
         'resources/js/filter.js',
+        'resources/js/infinite-scroll.js',
         ...moduleCssFiles,
         ...moduleJsFiles
       ],

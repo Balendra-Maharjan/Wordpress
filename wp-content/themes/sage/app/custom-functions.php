@@ -407,7 +407,7 @@ function load_more_projects() {
 
     $args = [
         'post_type' => 'blog',
-        'posts_per_page' => 4, // same as filter for consistency
+        'posts_per_page' => 2,
         'paged' => $paged,
     ];
 
@@ -420,35 +420,15 @@ function load_more_projects() {
         while ($query->have_posts()) {
             $query->the_post();
             $counter++;
-            ?>
-            <article>
-                <div class="post-thumbnail">
-                    <?php if (has_post_thumbnail()) :
-                        if ($counter === 1 && $paged === 1) {
-                            the_post_thumbnail('medium', [
-                                'loading' => 'eager',
-                                'fetchpriority' => 'high'
-                            ]);
-                        } else {
-                            the_post_thumbnail('medium', [
-                                'loading' => 'lazy'
-                            ]);
-                        }
-                    else : ?>
-                        <img src="<?php echo get_template_directory_uri(); ?>/images/default.jpg" alt="Default Image">
-                    <?php endif; ?>
-                </div>
-                <h2><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
-                <div class="excerpt"><?php the_excerpt(); ?></div>
-            </article>
-            <?php
+            echo \Roots\view('partials.content-blog', ['index' => $counter - 1, 'paged' => $paged])->render();
         }
     }
 
+    $html = ob_get_clean();
     wp_reset_postdata();
 
     wp_send_json_success([
-        'html' => ob_get_clean(),
+        'html' => $html,
         'has_more' => ($query->max_num_pages > $paged)
     ]);
 }
@@ -466,11 +446,16 @@ add_action('pre_get_posts', function ($query) {
 });
 
 add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_script('sage/filter.js', \Roots\asset('resources/js/filter.js')->uri(), ['jquery'], null, true);
-    wp_localize_script('sage/filter.js', 'filter_params', [
+    $params = [
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce'    => wp_create_nonce('filter_nonce'),
-    ]);
+    ];
+
+    wp_enqueue_script('sage/filter.js', \Roots\asset('resources/js/filter.js')->uri(), ['jquery'], null, true);
+    wp_localize_script('sage/filter.js', 'filter_params', $params);
+
+    wp_enqueue_script('sage/infinite-scroll.js', \Roots\asset('resources/js/infinite-scroll.js')->uri(), [], null, true);
+    wp_localize_script('sage/infinite-scroll.js', 'filter_params', $params);
 });
 
 // function add_html_to_cpt_permalink($post_link, $post) {

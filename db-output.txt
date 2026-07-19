@@ -1,0 +1,8 @@
+PAGES TEMPLATES:
+- ID: 77, Slug: pagination-test, Title: Advanced Pagination, Template: template-pagination.blade.php
+- ID: 74, Slug: load-more, Title: Load more, Template: template-infinite.blade.php
+- ID: 45, Slug: filter, Title: filter, Template: template-filter.blade.php
+- ID: 3, Slug: privacy-policy, Title: Privacy Policy, Template: default
+- ID: 2, Slug: sample-page, Title: Sample Page, Template: default
+
+TOTAL BLOGS: 15

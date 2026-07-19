@@ -1,4 +1,5 @@
 <article <?php (post_class()); ?>>
+  wordpress
   <header>
     <h1 class="entry-title">
       <?php echo $title; ?>

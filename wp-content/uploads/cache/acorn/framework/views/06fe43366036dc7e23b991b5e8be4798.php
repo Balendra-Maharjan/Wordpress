@@ -16,6 +16,10 @@
     <?php endif; ?>
 
     <?php echo app('Illuminate\Foundation\Vite')(['resources/styles/app.scss', 'resources/js/app.js']); ?>
+
+    <?php if(function_exists('get_field') && get_field('enable_swup', 'option')): ?>
+      <?php echo app('Illuminate\Foundation\Vite')(['resources/js/swup-init.js']); ?>
+    <?php endif; ?>
   </head>
 
   <body <?php (body_class()); ?>>
@@ -30,7 +34,9 @@
       <?php echo $__env->make('sections.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
       <main id="main" class="main">
-        <?php echo $__env->yieldContent('content'); ?>
+        <div id="swup" class="transition-fade">
+          <?php echo $__env->yieldContent('content'); ?>
+        </div>
       </main>
 
       <?php if (! empty(trim($__env->yieldContent('sidebar')))): ?>

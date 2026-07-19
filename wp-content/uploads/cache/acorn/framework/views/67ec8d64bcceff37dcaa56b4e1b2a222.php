@@ -2,7 +2,7 @@
   <?php echo $__env->make('partials.page-header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
   <?php if(is_front_page() || is_home()): ?>
-    <div id="project-posts">
+    <div id="project-posts" class="container py-5">
       <?php
         $args = [
             'post_type' => 'blog',
@@ -13,19 +13,21 @@
       ?>
 
       <?php if($query->have_posts()): ?>
-        <?php while($query->have_posts()): ?> 
-          <?php $query->the_post(); ?>
-          <article>
-            <h2><a href="<?php echo e(get_permalink()); ?>"><?php echo e(get_the_title()); ?></a></h2>
-            <div class="excerpt"><?php echo get_the_excerpt(); ?></div>
-          </article>
-        <?php endwhile; ?>
+        <div class="row-cols-1">
+          <?php $post_index = 0; ?>
+          <?php while($query->have_posts()): ?> 
+            <?php $query->the_post(); ?>
+            <?php echo $__env->make('partials.content-blog', ['index' => $post_index, 'paged' => 1], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+            <?php $post_index++; ?>
+          <?php endwhile; ?>
+        </div>
       <?php endif; ?>
 
       <?php wp_reset_postdata(); ?>
     </div>
-
-    <button id="load-more" data-page="2">Load More</button>
+    <div class="container pb-5 d-flex justify-content-center">
+      <button id="load-more" data-page="2" class="btn btn-outline-primary">Load More</button>
+    </div>
   <?php endif; ?>
   <?php if(! have_posts()): ?>
     <?php if (isset($component)) { $__componentOriginal5194778a3a7b899dcee5619d0610f5cf = $component; } ?>
@@ -61,47 +63,7 @@
 <?php $__env->startSection('sidebar'); ?>
   <?php echo $__env->make('sections.sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 <?php $__env->stopSection(); ?>
-<!-- <script>
-  document.addEventListener('DOMContentLoaded', () => {
-  console.log("app.js loaded");
-    const loadMoreBtn = document.getElementById("load-more");
-    console.log(loadMoreBtn);
-    
-              if (!loadMoreBtn) return;
-  
-              loadMoreBtn.addEventListener("click", function () {
-                  const button = this;
-                  const page = parseInt(button.dataset.page);
-  
-                  const data = new FormData();
-                  data.append("action", "load_more_projects");
-                  data.append("paged", page);
-  
-                  fetch("<?php echo admin_url('admin-ajax.php'); ?>", {
-                      method: "POST",
-                      body: data,
-                  })
-                      .then((res) => res.json())
-                      .then((res) => {
-                          if (res.success) {
-                              const postsContainer = document.getElementById("project-posts");
-                              postsContainer.insertAdjacentHTML("beforeend", res.data.html);
-                              button.dataset.page = page + 1;
-  
-                              if (!res.data.has_more) {
-                                  button.style.display = "none";
-                              }
-                          }
-                      });
-              });
-    
-  
-  });
-  
-  
 
-
-</script> -->
 
 
  

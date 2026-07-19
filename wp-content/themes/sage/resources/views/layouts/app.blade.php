@@ -16,6 +16,10 @@
     @endif
 
     @vite(['resources/styles/app.scss', 'resources/js/app.js'])
+
+    @if(function_exists('get_field') && get_field('enable_swup', 'option'))
+      @vite(['resources/js/swup-init.js'])
+    @endif
   </head>
 
   <body @php(body_class())>
@@ -29,7 +33,9 @@
       @include('sections.header')
 
       <main id="main" class="main">
-        @yield('content')
+        <div id="swup" class="transition-fade">
+          @yield('content')
+        </div>
       </main>
 
       @hasSection('sidebar')

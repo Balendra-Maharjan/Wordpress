@@ -29,6 +29,7 @@ export default defineConfig({
         'resources/js/single.js',
         'resources/js/filter.js',
         'resources/js/infinite-scroll.js',
+        // 'resources/js/swup-init.js',
         ...moduleCssFiles,
         ...moduleJsFiles
       ],

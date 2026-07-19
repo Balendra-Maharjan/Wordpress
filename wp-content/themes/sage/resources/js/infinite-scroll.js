@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const initInfiniteScroll = () => {
   const container = document.getElementById('infinite-posts-container');
   const anchor = document.getElementById('infinite-scroll-anchor');
 
@@ -58,4 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   observer.observe(anchor);
-});
+};
+
+document.addEventListener('DOMContentLoaded', initInfiniteScroll);
+document.addEventListener('theme:load', initInfiniteScroll);

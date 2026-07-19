@@ -263,29 +263,94 @@ function sage_section_gap($sectionTopGap, $sectionBottomGap) {
 
 function sage_custom_pagination($query, $paged) {
     $total_pages = $query->max_num_pages;
-    $current_page = $paged;
+    $current_page = max(1, intval($paged));
 
     if ($total_pages > 1) {
-        $pagination_html = '<nav class="pagination-container mt-8 flex justify-center">';
+        $pagination_html = '<nav class="pagination-container mt-8 flex justify-center" aria-label="Pagination">';
         $pagination_html .= '<div class="pagination-links inline-flex -space-x-px rounded-md shadow-sm text-sm">';
 
-        // Previous page link
+        // Previous Page Link
         if ($current_page > 1) {
-            $pagination_html .= '<a href="?paged=' . ($current_page - 1) . '" class="pagination-link relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white font-medium text-gray-500 hover:bg-gray-50">Previous</a>';
+            $pagination_html .= '<a href="?paged=' . ($current_page - 1) . '" class="pagination-link relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white font-medium text-gray-500 hover:bg-gray-50 transition" aria-label="Previous Page">&laquo; Prev</a>';
+        } else {
+            $pagination_html .= '<span class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-gray-100 font-medium text-gray-400 cursor-not-allowed">&laquo; Prev</span>';
         }
 
-        // Page number links
-        for ($i = 1; $i <= $total_pages; $i++) {
-            if ($i == $current_page) {
-                $pagination_html .= '<span class="current relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-600 font-medium text-white">' . $i . '</span>';
-            } else {
-                $pagination_html .= '<a href="?paged=' . $i . '" class="pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white font-medium text-gray-700 hover:bg-gray-50">' . $i . '</a>';
+        // Build pages array using sliding window logic
+        $raw_pages = [];
+
+        if ($total_pages <= 10) {
+            $raw_pages = range(1, $total_pages);
+        } else {
+            // Near start: show pages 1-5 and bridge pages 6-8, then last 5
+            if ($current_page <= 5) {
+                for ($i = 1; $i <= 8; $i++) {
+                    $raw_pages[] = $i;
+                }
+                for ($i = $total_pages - 4; $i <= $total_pages; $i++) {
+                    $raw_pages[] = $i;
+                }
+            } 
+            // Near end: show first 5, then bridge pages, then last 5
+            elseif ($current_page >= $total_pages - 4) {
+                for ($i = 1; $i <= 5; $i++) {
+                    $raw_pages[] = $i;
+                }
+                for ($i = $total_pages - 7; $i <= $total_pages; $i++) {
+                    $raw_pages[] = $i;
+                }
+            } 
+            // Middle case: show first 5, sliding window, last 5
+            else {
+                for ($i = 1; $i <= 5; $i++) {
+                    $raw_pages[] = $i;
+                }
+                for ($i = $current_page - 2; $i <= $current_page + 2; $i++) {
+                    $raw_pages[] = $i;
+                }
+                for ($i = $total_pages - 4; $i <= $total_pages; $i++) {
+                    $raw_pages[] = $i;
+                }
             }
         }
 
-        // Next page link
+        // Sort and de-duplicate page numbers
+        $raw_pages = array_unique($raw_pages);
+        sort($raw_pages);
+
+        // Build final navigation items with ellipses
+        $pagination_items = [];
+        $prev = 0;
+
+        foreach ($raw_pages as $page) {
+            if ($prev > 0) {
+                $gap = $page - $prev;
+                if ($gap == 2) {
+                    $pagination_items[] = $prev + 1; // fill single page gap
+                } elseif ($gap > 2) {
+                    $pagination_items[] = '...'; // add ellipsis for larger gaps
+                }
+            }
+            $pagination_items[] = $page;
+            $prev = $page;
+        }
+
+        // Render buttons
+        foreach ($pagination_items as $item) {
+            if ($item === '...') {
+                $pagination_html .= '<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-500 cursor-default">...</span>';
+            } elseif ($item == $current_page) {
+                $pagination_html .= '<span class="current relative inline-flex items-center px-4 py-2 border border-blue-600 bg-blue-600 font-semibold text-white z-10">' . $item . '</span>';
+            } else {
+                $pagination_html .= '<a href="?paged=' . $item . '" class="pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white font-medium text-gray-700 hover:bg-gray-50 transition">' . $item . '</a>';
+            }
+        }
+
+        // Next Page Link
         if ($current_page < $total_pages) {
-            $pagination_html .= '<a href="?paged=' . ($current_page + 1) . '" class="pagination-link relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white font-medium text-gray-500 hover:bg-gray-50">Next</a>';
+            $pagination_html .= '<a href="?paged=' . ($current_page + 1) . '" class="pagination-link relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white font-medium text-gray-500 hover:bg-gray-50 transition" aria-label="Next Page">Next &raquo;</a>';
+        } else {
+            $pagination_html .= '<span class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-gray-100 font-medium text-gray-400 cursor-not-allowed">Next &raquo;</span>';
         }
 
         $pagination_html .= '</div>';
@@ -305,7 +370,7 @@ function sage_filter_and_paginate_handler() {
     $search_query = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
     $category_slug = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : '';
     $paged = isset($_POST['paged']) ? (int)$_POST['paged'] : 1;
-    $posts_per_page = get_field('no_of_post_per_page', 'option') ?: 4;
+    $posts_per_page = get_field('no_of_post_per_page', 'option') ?: 6;
 
     $args = [
         'post_type' => 'blog',
@@ -509,3 +574,131 @@ function blog_custom_columns_content($column, $post_id) {
     }
 }
 add_action('manage_blog_posts_custom_column', 'blog_custom_columns_content', 10, 2);
+
+// Programmatically register the pagination-test page and seed mock posts if needed
+add_action('init', function () {
+    // 1. Check/Create the Page
+    $page_slug = 'pagination-test';
+    $page_title = 'Advanced Pagination';
+    $page_check = get_page_by_path($page_slug);
+    
+    if (!isset($page_check->ID)) {
+        $page_id = wp_insert_post([
+            'post_title'    => $page_title,
+            'post_content'  => 'Dynamic pagination test page.',
+            'post_status'   => 'publish',
+            'post_type'     => 'page',
+            'post_name'     => $page_slug,
+        ]);
+        if ($page_id && !is_wp_error($page_id)) {
+            update_post_meta($page_id, '_wp_page_template', 'template-pagination.blade.php');
+        }
+    } else {
+        // Ensure the template is set correctly in case it was created with a default template
+        update_post_meta($page_check->ID, '_wp_page_template', 'template-pagination.blade.php');
+    }
+
+    // 2. Check/Seed posts
+    $blogs = get_posts([
+        'post_type' => 'blog',
+        'posts_per_page' => -1,
+        'post_status' => 'publish',
+    ]);
+
+    $count = count($blogs);
+    if ($count < 15) {
+        $needed = 15 - $count;
+        $reference_post = !empty($blogs) ? $blogs[0] : null;
+        
+        for ($i = 1; $i <= $needed; $i++) {
+            $title = $reference_post 
+                ? $reference_post->post_title . ' - Mock #' . $i
+                : 'Sample Blog Post #' . ($count + $i);
+            
+            $content = $reference_post
+                ? $reference_post->post_content
+                : 'This is a sample blog post content created for testing advanced sliding pagination.';
+            
+            $new_post_id = wp_insert_post([
+                'post_title'   => $title,
+                'post_content' => $content,
+                'post_status'  => 'publish',
+                'post_type'    => 'blog',
+            ]);
+
+            if ($new_post_id && $reference_post) {
+                // Category
+                $categories = wp_get_post_categories($reference_post->ID);
+                if (!empty($categories)) {
+                    wp_set_post_categories($new_post_id, $categories);
+                }
+                
+                // Featured image (thumbnail)
+                $thumbnail_id = get_post_thumbnail_id($reference_post->ID);
+                if ($thumbnail_id) {
+                    set_post_thumbnail($new_post_id, $thumbnail_id);
+                }
+            }
+        }
+    }
+
+    // 3. Debug Output to file
+    $pages = get_posts([
+        'post_type' => 'page',
+        'posts_per_page' => -1,
+        'post_status' => 'any',
+    ]);
+    $output = "PAGES TEMPLATES:\n";
+    foreach ($pages as $p) {
+        $template = get_post_meta($p->ID, '_wp_page_template', true);
+        $output .= "- ID: {$p->ID}, Slug: {$p->post_name}, Title: {$p->post_title}, Template: {$template}\n";
+    }
+    $output .= "\nTOTAL BLOGS: " . count(get_posts(['post_type' => 'blog', 'posts_per_page' => -1])) . "\n";
+    file_put_contents(ABSPATH . 'db-output.txt', $output);
+});
+
+// AJAX handler for template-pagination.blade.php
+function sage_ajax_pagination_handler() {
+    $paged = isset($_POST['paged']) ? (int)$_POST['paged'] : 1;
+    $posts_per_page = isset($_POST['posts_per_page']) ? (int)$_POST['posts_per_page'] : 1;
+
+    $args = [
+        'post_type' => 'blog',
+        'posts_per_page' => $posts_per_page,
+        'paged' => $paged,
+        'post_status' => 'publish',
+    ];
+
+    $query = new WP_Query($args);
+
+    ob_start();
+
+    if ($query->have_posts()) {
+        $counter = 0;
+        while ($query->have_posts()) {
+            $query->the_post();
+            $counter++;
+            echo \Roots\view('partials.content-blog', ['index' => $counter - 1, 'paged' => $paged])->render();
+        }
+    } else {
+        echo '<p class="text-center py-10 text-gray-500">No blog posts found.</p>';
+    }
+
+    $html = ob_get_clean();
+    wp_reset_postdata();
+
+    wp_send_json_success([
+        'html' => $html,
+        'pagination' => sage_custom_pagination($query, $paged),
+    ]);
+}
+add_action('wp_ajax_ajax_pagination', 'sage_ajax_pagination_handler');
+add_action('wp_ajax_nopriv_ajax_pagination', 'sage_ajax_pagination_handler');
+
+// Prevent WordPress from redirecting pagination query parameters on the pagination test page
+add_filter('redirect_canonical', function ($redirect_url, $requested_url) {
+    if (is_page('pagination-test') || is_page_template('template-pagination.blade.php')) {
+        return false;
+    }
+    return $redirect_url;
+}, 10, 2);

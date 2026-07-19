@@ -24,6 +24,27 @@
             "step": "",
             "prepend": "",
             "append": ""
+        },
+        {
+            "key": "field_enable_swup",
+            "label": "Enable Swup JS",
+            "name": "enable_swup",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Toggle page transitions using Swup.js",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Enabled",
+            "ui_off_text": "Disabled",
+            "allow_in_bindings": 0
         }
     ],
     "location": [

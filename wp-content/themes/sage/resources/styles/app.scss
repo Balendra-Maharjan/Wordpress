@@ -56,3 +56,13 @@
   background-color: #3b82f6;
   color: #fff;
 }
+
+/* Swup Page Transitions */
+.transition-fade {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+html.is-animating .transition-fade {
+  opacity: 0;
+}

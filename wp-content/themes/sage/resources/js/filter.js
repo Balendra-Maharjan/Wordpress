@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const initFilter = () => {
   const filterForm = document.getElementById('post-filter-form');
   const resultsContainer = document.getElementById('filter-results-container');
   const paginationContainer = document.getElementById('pagination-container');
@@ -119,4 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
   filterForm.querySelector('[name="search"]').value = currentSearch;
   filterForm.querySelector('[name="category"]').value = currentCategory;
   filterForm.querySelector('input[name="paged"]').value = currentPage;
-});
+};
+
+document.addEventListener('DOMContentLoaded', initFilter);
+document.addEventListener('theme:load', initFilter);

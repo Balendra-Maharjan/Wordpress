@@ -17,19 +17,11 @@
 
       @if ($query->have_posts())
         <div class="row-cols-1">
+          @php $post_index = 0; @endphp
           @while ($query->have_posts()) 
             @php $query->the_post(); @endphp
-            <article>
-              @php static $post_index = 0; @endphp
-              @if (has_post_thumbnail())
-                <div class="post-thumbnail">
-                  {!! get_the_post_thumbnail(null, 'medium', $post_index === 0 ? ['loading' => 'eager', 'fetchpriority' => 'high'] : []) !!}
-                </div>
-              @endif
-              <h2><a href="{{ get_permalink() }}">{{ get_the_title() }}</a></h2>
-              <div class="excerpt">{!! get_the_excerpt() !!}</div>
-              @php $post_index++; @endphp
-            </article>
+            @include('partials.content-blog', ['index' => $post_index, 'paged' => 1])
+            @php $post_index++; @endphp
           @endwhile
         </div>
       @endif
